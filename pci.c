@@ -5,7 +5,7 @@
 //#include "string.h"
 #include "pci.h"
 #include "pcireg.h"
-//#include "e1000.h"
+#include "e1000.h"
 
 // Flag to do "lspci" at bootup
 static int pci_show_devs = 1;
@@ -17,6 +17,7 @@ static uint32_t pci_conf1_data_ioport = 0x0cfc;
 
 // Forward declarations
 static int pci_bridge_attach(struct pci_func *pcif);
+static int e1000_attach(struct pci_func *pcif);
 
 // PCI driver table
 struct pci_driver {
@@ -33,6 +34,7 @@ struct pci_driver pci_attach_class[] = {
 // pci_attach_vendor matches the vendor ID and device ID of a PCI device. key1
 // and key2 should be the vendor ID and device ID respectively
 struct pci_driver pci_attach_vendor[] = {
+	{ 0x8086, 0x100e, &e1000_attach },
 	{ 0, 0, 0 },
 };
 
@@ -186,6 +188,14 @@ pci_bridge_attach(struct pci_func *pcif)
 
 	pci_scan_bus(&nbus);
 	return 1;
+}
+
+static int
+e1000_attach(struct pci_func *pcif)
+{
+	pci_func_enable(pcif);
+	e1000_init(pcif);
+	return 0;
 }
 
 // External PCI subsystem interface
