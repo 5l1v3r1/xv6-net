@@ -2,10 +2,8 @@
 #include "defs.h"
 #include "x86.h"
 #include "assert.h"
-//#include "string.h"
 #include "pci.h"
 #include "pcireg.h"
-#include "e1000.h"
 
 // Flag to do "lspci" at bootup
 static int pci_show_devs = 1;

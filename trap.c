@@ -56,6 +56,10 @@ trap(struct trapframe *tf)
     }
     lapiceoi();
     break;
+  case T_IRQ0 + 11:
+    e1000_intr();
+    lapiceoi();
+    break;
   case T_IRQ0 + IRQ_IDE:
     ideintr();
     lapiceoi();

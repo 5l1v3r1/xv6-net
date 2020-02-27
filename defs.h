@@ -2,6 +2,7 @@ struct buf;
 struct context;
 struct file;
 struct inode;
+struct pci_func;
 struct pipe;
 struct proc;
 struct rtcdate;
@@ -21,6 +22,10 @@ void            consoleinit(void);
 void            cprintf(char*, ...);
 void            consoleintr(int(*)(void));
 void            panic(char*) __attribute__((noreturn));
+
+// e1000.c
+int             e1000_init(struct pci_func *);
+void            e1000_intr(void);
 
 // exec.c
 int             exec(char*, char**);
