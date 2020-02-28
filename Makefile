@@ -12,6 +12,7 @@ OBJS = \
 	lapic.o\
 	log.o\
 	main.o\
+	mbuf.o\
 	mp.o\
 	pci.o\
 	picirq.o\
