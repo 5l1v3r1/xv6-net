@@ -15,8 +15,8 @@
 
 struct e1000 {
   uint32_t mmio_base;
-  struct rx_desc rx_ring[RX_DESC_NUM];
-  struct tx_desc tx_ring[TX_DESC_NUM];
+  struct rx_desc rx_ring[RX_DESC_NUM] __attribute__((aligned(16)));
+  struct tx_desc tx_ring[TX_DESC_NUM] __attribute__((aligned(16)));
   uint8_t addr[6];
   uint8_t irq;
   struct e1000 *next;
