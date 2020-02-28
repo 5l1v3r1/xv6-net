@@ -8,6 +8,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "traps.h"
+#include "mbuf.h"
 #include "e1000_dev.h"
 
 #define RX_DESC_NUM 16
@@ -17,6 +18,8 @@ struct e1000 {
   uint32_t mmio_base;
   struct rx_desc rx_ring[RX_DESC_NUM] __attribute__((aligned(16)));
   struct tx_desc tx_ring[TX_DESC_NUM] __attribute__((aligned(16)));
+  struct mbuf *rx_mbufs[RX_DESC_NUM];
+  struct mbuf *tx_mbufs[TX_DESC_NUM];
   uint8_t addr[6];
   uint8_t irq;
   struct e1000 *next;
@@ -78,12 +81,13 @@ e1000_resolve_mmio_base(struct pci_func *pcif)
 static void
 e1000_rx_init(struct e1000 *dev)
 {
-  // alloc DMA buffer
+  // initialize rx descriptors/mbufs
   for(int n = 0; n < RX_DESC_NUM; n++) {
-    dev->rx_ring[n].addr = (uint64_t)V2P(kalloc());
-    dev->rx_ring[n].status = 0;
+    memset(&dev->rx_ring[n], 0, sizeof(struct rx_desc));
+    dev->rx_mbufs[n] = mbufalloc(0);
+    dev->rx_ring[n].addr = (uint64_t)V2P(dev->rx_mbufs[n]->head);
   }
-  // setup rx descriptors (ring buffer)
+  // setup rx descriptors
   uint64_t base = (uint64_t)(V2P(dev->rx_ring));
   e1000_reg_write(dev, E1000_RDBAL, (uint32_t)(base & 0xffffffff));
   e1000_reg_write(dev, E1000_RDBAH, (uint32_t)(base >> 32));
@@ -110,12 +114,12 @@ e1000_rx_init(struct e1000 *dev)
 static void
 e1000_tx_init(struct e1000 *dev)
 {
-  // clear DMA buffer
+  // Initialize tx descpriptors/mbufs
   for (int n = 0; n < TX_DESC_NUM; n++) {
-    dev->tx_ring[n].addr = 0;
-    dev->tx_ring[n].cmd = 0;
+    memset(&dev->tx_ring[n], 0, sizeof(struct tx_desc));
+    dev->tx_mbufs[n] = 0;
   }
-  // setup tx descriptors (ring buffer)
+  // setup tx descriptors
   uint64_t base = (uint64_t)(V2P(dev->tx_ring));
   e1000_reg_write(dev, E1000_TDBAL, (uint32_t)(base & 0xffffffff));
   e1000_reg_write(dev, E1000_TDBAH, (uint32_t)(base >> 32) );
