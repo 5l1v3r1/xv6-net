@@ -221,10 +221,9 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 ifndef CPUS
 CPUS := 2
 endif
-QEMUNET = \
-	-netdev user,id=net0,hostfwd=udp::10007-:7,hostfwd=tcp::10007-:7,hostfwd=tcp::10080-:80 \
-	-device e1000,netdev=net0 \
-	-object filter-dump,id=filter0,netdev=net0,file=qemu.pcap
+QEMUNET = -netdev user,id=n1,hostfwd=udp::10007-:7,hostfwd=tcp::10007-:70 -device e1000,netdev=n1 -object filter-dump,id=f1,netdev=n1,file=n1.pcap \
+	  -netdev user,id=n2,hostfwd=tcp::10080-:80 -device e1000,netdev=n2 -object filter-dump,id=f2,netdev=n2,file=n2.pcap
+
 QEMUEXTRA = -monitor telnet::10381,server,nowait
 QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUNET) $(QEMUEXTRA)
 
