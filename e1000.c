@@ -155,7 +155,6 @@ e1000_init(struct pci_func *pcif)
 {
   struct e1000 *dev = (struct e1000*)kalloc();
 
-cprintf("sizeof(struct e1000): %d\n", sizeof(struct e1000));
   // Resolve MMIO base address
   dev->mmio_base = e1000_resolve_mmio_base(pcif);
   assert(dev->mmio_base);
