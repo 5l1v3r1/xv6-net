@@ -140,17 +140,20 @@ e1000_tx_init(struct e1000 *dev)
 void
 e1000_rx(struct e1000 *dev)
 {
-
+  cprintf("[e1000] %p\n", dev);
 }
 
 void
 e1000_intr(void)
 {
   struct e1000 *dev;
+  uint32_t icr;
   cprintf("[e1000_intr]\n");
   for (dev = devices; dev; dev = dev->next) {
-    e1000_rx(dev);
-    e1000_reg_write(dev, E1000_ICR, E1000_ICR_RXT0);
+    icr = e1000_reg_read(dev, E1000_ICR);
+    if (icr & E1000_ICR_RXT0) {
+      e1000_rx(dev);
+    }
   }
 }
 
