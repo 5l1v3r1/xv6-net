@@ -96,7 +96,7 @@ e1000_rx_init(struct e1000 *dev)
   e1000_reg_write(dev, E1000_RDLEN, (uint32_t)(RX_DESC_NUM * 16));
   // setup head/tail
   e1000_reg_write(dev, E1000_RDH, 0);
-  e1000_reg_write(dev, E1000_RDT, RX_DESC_NUM);
+  e1000_reg_write(dev, E1000_RDT, RX_DESC_NUM - 1);
   // set tx control register
   e1000_reg_write(dev, E1000_RCTL, (
     E1000_RCTL_SBP        | /* store bad packet */
@@ -137,10 +137,37 @@ e1000_tx_init(struct e1000 *dev)
   );
 }
 
-void
+static void
 e1000_rx(struct e1000 *dev)
 {
-  cprintf("[e1000] %p\n", dev);
+  cprintf("e1000: dev=%p\n", dev);
+  while (1) {
+    uint32_t tail = (e1000_reg_read(dev, E1000_RDT)+1) % RX_DESC_NUM;
+    struct rx_desc *desc = &dev->rx_ring[tail];
+    if (!(desc->status & E1000_RXD_STAT_DD)) {
+      /* EMPTY */
+      break;
+    }
+    do {
+      if (desc->length < 60) {
+        cprintf("e1000: short packet (%d bytes)\n", desc->length);
+        break;
+      }
+      if (!(desc->status & E1000_RXD_STAT_EOP)) {
+        cprintf("e1000: not EOP! this driver does not support packet that do not fit in one buffer\n");
+        break;
+      }
+      if (desc->errors) {
+        cprintf("e1000: rx errors (0x%x)\n", desc->errors);
+        break;
+      }
+      struct mbuf *mbuf = dev->rx_mbufs[tail];
+      cprintf("e1000: %d bytes received\n", desc->length);
+      hexdump(mbuf->head, desc->length);
+    } while (0);
+    desc->status = (uint16_t)(0);
+    e1000_reg_write(dev, E1000_RDT, tail);
+  }
 }
 
 void
@@ -148,11 +175,13 @@ e1000_intr(void)
 {
   struct e1000 *dev;
   uint32_t icr;
-  cprintf("[e1000_intr]\n");
+  cprintf("\n[e1000_intr]\n");
   for (dev = devices; dev; dev = dev->next) {
     icr = e1000_reg_read(dev, E1000_ICR);
     if (icr & E1000_ICR_RXT0) {
       e1000_rx(dev);
+      // clear pending interrupts
+      e1000_reg_read(dev, E1000_ICR);
     }
   }
 }
@@ -165,10 +194,10 @@ e1000_init(struct pci_func *pcif)
   // Resolve MMIO base address
   dev->mmio_base = e1000_resolve_mmio_base(pcif);
   assert(dev->mmio_base);
-  cprintf("mmio_base: %x\n", dev->mmio_base);
+  cprintf("e1000: mmio_base=%x\n", dev->mmio_base);
   // Read HW address from EEPROM
   e1000_read_addr_from_eeprom(dev, dev->addr);
-  cprintf("%x:%x:%x:%x:%x:%x\n", dev->addr[0], dev->addr[1], dev->addr[2], dev->addr[3], dev->addr[4], dev->addr[5]);
+  cprintf("e1000: addr=%x:%x:%x:%x:%x:%x\n", dev->addr[0], dev->addr[1], dev->addr[2], dev->addr[3], dev->addr[4], dev->addr[5]);
   // Register I/O APIC
   dev->irq = pcif->irq_line;
   ioapicenable(dev->irq, ncpu - 1);
