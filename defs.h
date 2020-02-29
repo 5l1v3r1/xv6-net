@@ -22,6 +22,7 @@ void            consoleinit(void);
 void            cprintf(char*, ...);
 void            consoleintr(int(*)(void));
 void            panic(char*) __attribute__((noreturn));
+void            hexdump (void *data, int size);
 
 // e1000.c
 int             e1000_init(struct pci_func *);

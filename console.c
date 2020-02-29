@@ -14,6 +14,7 @@
 #include "mmu.h"
 #include "proc.h"
 #include "x86.h"
+#include "ctype.h"
 
 static void consputc(int);
 
@@ -124,6 +125,44 @@ panic(char *s)
   panicked = 1; // freeze other CPU
   for(;;)
     ;
+}
+
+void
+hexdump (void *data, int size) {
+  int offset, index;
+  unsigned char *src;
+
+  src = (unsigned char *)data;
+  cprintf("+------+-------------------------------------------------+------------------+\n");
+  for (offset = 0; offset < size; offset += 16) {
+    cprintf("| ");
+    if (offset <= 0x0fff) cprintf("0");
+    if (offset <= 0x00ff) cprintf("0");
+    if (offset <= 0x000f) cprintf("0");
+    cprintf("%x | ", offset);
+    for (index = 0; index < 16; index++) {
+      if(offset + index < (int)size) {
+        if (src[offset + index] <= 0x0f) cprintf("0");
+        cprintf("%x ", 0xff & src[offset + index]);
+      } else {
+        cprintf("   ");
+      }
+    }
+    cprintf("| ");
+    for(index = 0; index < 16; index++) {
+      if(offset + index < (int)size) {
+        if(isascii(src[offset + index]) && isprint(src[offset + index])) {
+          cprintf("%c", src[offset + index]);
+        } else {
+          cprintf(".");
+        }
+      } else {
+        cprintf(" ");
+      }
+    }
+    cprintf(" |\n");
+  }
+  cprintf("+------+-------------------------------------------------+------------------+\n");
 }
 
 //PAGEBREAK: 50
