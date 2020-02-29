@@ -50,7 +50,7 @@ printint(int xx, int base, int sign)
 }
 //PAGEBREAK: 50
 
-// Print to the console. only understands %d, %x, %p, %s.
+// Print to the console. only understands %d, %x, %p, %s, %c.
 void
 cprintf(char *fmt, ...)
 {
@@ -87,6 +87,9 @@ cprintf(char *fmt, ...)
         s = "(null)";
       for(; *s; s++)
         consputc(*s);
+      break;
+    case 'c':
+      consputc(*argp++);
       break;
     case '%':
       consputc('%');
